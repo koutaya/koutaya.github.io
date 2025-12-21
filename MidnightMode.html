@@ -67,6 +67,7 @@
             letter-spacing: 0.05em;
         }
 
+        /* PC向け（基本）のセクションタイトル */
         .section-title {
             text-align: center;
             font-size: 2.5rem;
@@ -75,6 +76,7 @@
             text-shadow: var(--neon-glow);
             position: relative;
             padding: 0 10px;
+            line-height: 1.4;
         }
 
         .section-title::after {
@@ -138,31 +140,25 @@
             position: relative;
             max-width: 100%;
             height: auto;
-            /* 矢印ボタンが重なるための基準点 */
             z-index: 1;
         }
 
-        /* スライダーのレール (JSでtransform制御) */
         .slider-track {
             display: flex;
             width: 100%;
             height: auto;
             transition: transform 0.5s ease-in-out;
-            /* なめらかに動く */
         }
 
-        /* 個々の画像 */
         .slider-track img {
             width: 100%;
-            /* 親ボックスいっぱいに表示 */
             flex-shrink: 0;
-            /* 縮ませない */
             height: auto;
             object-fit: contain;
             display: block;
         }
 
-        /* --- 矢印ボタン --- */
+        /* 矢印ボタン */
         .slider-arrow {
             position: absolute;
             top: 50%;
@@ -196,7 +192,7 @@
             right: 15px;
         }
 
-        /* --- インジケーター（ドット） --- */
+        /* インジケーター */
         .slider-indicators {
             position: absolute;
             bottom: 15px;
@@ -222,7 +218,7 @@
             transform: scale(1.2);
         }
 
-        /* ラベル（After/Before） */
+        /* ラベル */
         .slider-label {
             position: absolute;
             top: 20px;
@@ -237,7 +233,6 @@
             z-index: 10;
             transition: opacity 0.3s;
         }
-
 
         .btn-cta {
             display: inline-block;
@@ -420,15 +415,39 @@
             text-decoration: none;
         }
 
-        /* スマホ対応 */
+        /* --- スマホ対応（メディアクエリ） --- */
         @media (max-width: 768px) {
             :root {
                 --spacing-lg: 60px;
                 --spacing-md: 40px;
             }
 
+            /* タイトルの文字サイズ調整 */
             .hero h1 {
                 font-size: 2rem;
+            }
+
+            /* 修正: キャッチコピーの説明文を小さく見やすく */
+            .hero p {
+                font-size: 0.95rem;
+                /* サイズダウン */
+                line-height: 1.7;
+                /* 行間を広げて見やすく */
+                padding: 0 10px;
+                /* 左右に余白 */
+                margin-bottom: 30px;
+            }
+
+            /* 見出しを小さく */
+            .section-title {
+                font-size: 1.5rem;
+                /* 24px程度に縮小 */
+                margin-bottom: 30px;
+            }
+
+            .section-title::after {
+                width: 50px;
+                margin-top: 15px;
             }
 
             .hero-image-box {
@@ -444,7 +463,6 @@
                 grid-template-columns: 1fr;
             }
 
-            /* スマホでの矢印サイズ調整 */
             .slider-arrow {
                 width: 40px;
                 height: 40px;
@@ -464,9 +482,10 @@
 
             <div class="hero-image-box">
                 <div class="slider-track" id="sliderTrack">
-                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/before.png" alt="Protected Mode" data-label="ノーマルモード" data-color="#555555">
-                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/after.png" alt="Unprotected Mode" data-label="ロックモード" data-color="#ff2a6d">
-
+                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/before.png"
+                        alt="ノーマルモード" data-label="ノーマルモード" data-color="#555555" 　>
+                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/after.png"
+                        alt="ロックモード" data-label="ロックモード" data-color="#ff2a6d">
                 </div>
 
                 <button class="slider-arrow prev" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
@@ -604,14 +623,11 @@
 
             // スライドを更新する関数
             function updateSlider() {
-                // スライド移動
                 track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
 
-                // ドットの更新
                 dots.forEach(d => d.classList.remove('active'));
                 dots[currentIndex].classList.add('active');
 
-                // ラベルと色の更新
                 const currentSlide = slides[currentIndex];
                 const labelText = currentSlide.getAttribute('data-label');
                 const labelColor = currentSlide.getAttribute('data-color');
@@ -628,19 +644,16 @@
                 updateSlider();
             }
 
-            // 次へ
             nextBtn.addEventListener('click', () => {
                 currentIndex = (currentIndex + 1) % slides.length;
                 updateSlider();
             });
 
-            // 前へ
             prevBtn.addEventListener('click', () => {
                 currentIndex = (currentIndex - 1 + slides.length) % slides.length;
                 updateSlider();
             });
 
-            // 初期化
             updateSlider();
         });
     </script>
