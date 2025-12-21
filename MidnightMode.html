@@ -127,63 +127,102 @@
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
         }
 
-        /* --- スライダー機能付き画像ボックス --- */
+        /* --- 手動スライダー画像ボックス --- */
         .hero-image-box {
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            /* はみ出した画像を隠す */
             box-shadow: 0 0 30px rgba(255, 42, 109, 0.2), 0 20px 50px rgba(0, 0, 0, 0.8);
             margin: 0 auto 50px;
             border: 1px solid rgba(255, 42, 109, 0.2);
             position: relative;
             max-width: 100%;
-            aspect-ratio: 16 / 9;
-            /* アスペクト比を固定してガタつき防止 */
+            height: auto;
+            /* 矢印ボタンが重なるための基準点 */
+            z-index: 1;
         }
 
-        /* スライダーのレール */
+        /* スライダーのレール (JSでtransform制御) */
         .slider-track {
             display: flex;
-            width: 200%;
-            /* 画像2枚分なので200% */
-            height: 100%;
-            animation: slideAnimation 12s infinite ease-in-out;
-            /* 12秒でループ */
+            width: 100%;
+            height: auto;
+            transition: transform 0.5s ease-in-out;
+            /* なめらかに動く */
         }
 
         /* 個々の画像 */
         .slider-track img {
-            width: 50%;
-            /* 親の200%の半分なので、実質100% */
-            height: 100%;
-            object-fit: cover;
-            /* 枠に合わせてトリミング */
+            width: 100%;
+            /* 親ボックスいっぱいに表示 */
+            flex-shrink: 0;
+            /* 縮ませない */
+            height: auto;
+            object-fit: contain;
             display: block;
         }
 
-        /* スライドアニメーション定義 */
-        @keyframes slideAnimation {
-
-            0%,
-            45% {
-                transform: translateX(0);
-                /* 1枚目表示 */
-            }
-
-            50%,
-            95% {
-                transform: translateX(-50%);
-                /* 2枚目へスライドして表示 */
-            }
-
-            100% {
-                transform: translateX(0);
-                /* 最初に戻る */
-            }
+        /* --- 矢印ボタン --- */
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: 1px solid rgba(255, 42, 109, 0.5);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(255, 42, 109, 0.2);
         }
 
-        /* ラベル（After/Before）のオーバーレイ */
+        .slider-arrow:hover {
+            background: rgba(255, 42, 109, 0.8);
+            box-shadow: 0 0 20px rgba(255, 42, 109, 0.8);
+        }
+
+        .slider-arrow.prev {
+            left: 15px;
+        }
+
+        .slider-arrow.next {
+            right: 15px;
+        }
+
+        /* --- インジケーター（ドット） --- */
+        .slider-indicators {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .indicator-dot.active {
+            background: var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+            transform: scale(1.2);
+        }
+
+        /* ラベル（After/Before） */
         .slider-label {
             position: absolute;
             top: 20px;
@@ -196,34 +235,7 @@
             font-weight: bold;
             box-shadow: 0 0 10px var(--neon-pink);
             z-index: 10;
-        }
-
-        /* ラベルの文字もアニメーションで切り替える */
-        .slider-label::after {
-            content: 'ノーマルモード';
-            /* 1枚目のテキスト */
-            animation: labelAnimation 12s infinite steps(1);
-        }
-
-        @keyframes labelAnimation {
-
-            0%,
-            45% {
-                content: 'ノーマルモード';
-                background: var(--neon-pink);
-            }
-
-            46%,
-            95% {
-                background: var(--neon-pink);
-                content: 'ロックモード';
-            }
-
-            /* 2枚目のテキストと色 */
-            100% {
-                content: 'ノーマルモード';
-                background: var(--neon-pink);
-            }
+            transition: opacity 0.3s;
         }
 
 
@@ -420,11 +432,9 @@
             }
 
             .hero-image-box {
-                aspect-ratio: auto;
-                height: 200px;
+                height: auto;
             }
 
-            /* スマホでは高さを指定 */
             .step-container {
                 flex-direction: column;
                 align-items: center;
@@ -432,6 +442,13 @@
 
             .feature-grid {
                 grid-template-columns: 1fr;
+            }
+
+            /* スマホでの矢印サイズ調整 */
+            .slider-arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
             }
         }
     </style>
@@ -446,12 +463,18 @@
                 あなたのブラウザを鉄壁の要塞に変えるChrome拡張機能。</p>
 
             <div class="hero-image-box">
-                <div class="slider-track">
-                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/before.png" alt="ノーマルモード">
-                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/after.png" alt="ロックモード">
+                <div class="slider-track" id="sliderTrack">
+                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/before.png" alt="Protected Mode" data-label="ノーマルモード" data-color="#555555">
+                    <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/after.png" alt="Unprotected Mode" data-label="ロックモード" data-color="#ff2a6d">
+
                 </div>
 
-                <div class="slider-label"></div>
+                <button class="slider-arrow prev" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="slider-arrow next" id="nextBtn"><i class="fa-solid fa-chevron-right"></i></button>
+
+                <div class="slider-indicators" id="indicators"></div>
+
+                <div class="slider-label" id="sliderLabel">Protected Mode</div>
             </div>
 
             <a href="#" class="btn-cta"><i class="fa-brands fa-chrome"></i> Chromeに追加する</a>
@@ -555,7 +578,72 @@
         </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const track = document.getElementById('sliderTrack');
+            const slides = Array.from(track.children);
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const indicatorsContainer = document.getElementById('indicators');
+            const labelEl = document.getElementById('sliderLabel');
+
+            let currentIndex = 0;
+
+            // インジケーターの生成
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('indicator-dot');
+                if (index === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => {
+                    goToSlide(index);
+                });
+                indicatorsContainer.appendChild(dot);
+            });
+
+            const dots = Array.from(indicatorsContainer.children);
+
+            // スライドを更新する関数
+            function updateSlider() {
+                // スライド移動
+                track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+
+                // ドットの更新
+                dots.forEach(d => d.classList.remove('active'));
+                dots[currentIndex].classList.add('active');
+
+                // ラベルと色の更新
+                const currentSlide = slides[currentIndex];
+                const labelText = currentSlide.getAttribute('data-label');
+                const labelColor = currentSlide.getAttribute('data-color');
+
+                if (labelText) {
+                    labelEl.textContent = labelText;
+                    labelEl.style.background = labelColor || '#ff2a6d';
+                    labelEl.style.boxShadow = `0 0 10px ${labelColor || '#ff2a6d'}`;
+                }
+            }
+
+            function goToSlide(index) {
+                currentIndex = index;
+                updateSlider();
+            }
+
+            // 次へ
+            nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % slides.length;
+                updateSlider();
+            });
+
+            // 前へ
+            prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+                updateSlider();
+            });
+
+            // 初期化
+            updateSlider();
+        });
+    </script>
 </body>
 
 </html>
-
