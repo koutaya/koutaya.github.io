@@ -141,6 +141,10 @@
             max-width: 100%;
             height: auto;
             z-index: 1;
+            /* スマホでのタッチ操作をスムーズにする */
+            touch-action: pan-y;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .slider-track {
@@ -148,6 +152,11 @@
             width: 100%;
             height: auto;
             transition: transform 0.5s ease-in-out;
+            cursor: grab;
+        }
+
+        .slider-track:active {
+            cursor: grabbing;
         }
 
         .slider-track img {
@@ -156,6 +165,8 @@
             height: auto;
             object-fit: contain;
             display: block;
+            pointer-events: none;
+            /* 画像のドラッグ防止 */
         }
 
         /* 矢印ボタン */
@@ -427,21 +438,17 @@
                 font-size: 2rem;
             }
 
-            /* 修正: キャッチコピーの説明文を小さく見やすく */
+            /* キャッチコピーの説明文 */
             .hero p {
                 font-size: 0.95rem;
-                /* サイズダウン */
                 line-height: 1.7;
-                /* 行間を広げて見やすく */
                 padding: 0 10px;
-                /* 左右に余白 */
                 margin-bottom: 30px;
             }
 
-            /* 見出しを小さく */
+            /* 見出し */
             .section-title {
                 font-size: 1.5rem;
-                /* 24px程度に縮小 */
                 margin-bottom: 30px;
             }
 
@@ -480,12 +487,12 @@
             <p>「後ろから誰か来た！」その瞬間、すべてを隠蔽。<br>
                 あなたのブラウザを鉄壁の要塞に変えるChrome拡張機能。</p>
 
-            <div class="hero-image-box">
+            <div class="hero-image-box" id="heroSliderBox">
                 <div class="slider-track" id="sliderTrack">
                     <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/before.png"
-                        alt="ノーマルモード" data-label="ノーマルモード" data-color="#555555" 　>
+                        alt="Protected Mode" data-label="ノーマルモード" data-color="#555555">
                     <img src="https://raw.githubusercontent.com/koutaya/koutaya.github.io/refs/heads/main/after.png"
-                        alt="ロックモード" data-label="ロックモード" data-color="#ff2a6d">
+                        alt="Unprotected Mode" data-label="ロックモード" data-color="#ff2a6d">
                 </div>
 
                 <button class="slider-arrow prev" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
@@ -600,6 +607,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const track = document.getElementById('sliderTrack');
+            const sliderBox = document.getElementById('heroSliderBox');
             const slides = Array.from(track.children);
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
@@ -607,21 +615,24 @@
             const labelEl = document.getElementById('sliderLabel');
 
             let currentIndex = 0;
+            let autoPlayInterval;
+            const autoPlayDelay = 4000; // 4秒ごとに切り替え
 
-            // インジケーターの生成
+            // --- インジケーター生成 ---
             slides.forEach((_, index) => {
                 const dot = document.createElement('div');
                 dot.classList.add('indicator-dot');
                 if (index === 0) dot.classList.add('active');
                 dot.addEventListener('click', () => {
                     goToSlide(index);
+                    resetAutoPlay();
                 });
                 indicatorsContainer.appendChild(dot);
             });
 
             const dots = Array.from(indicatorsContainer.children);
 
-            // スライドを更新する関数
+            // --- スライド更新関数 ---
             function updateSlider() {
                 track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
 
@@ -636,6 +647,9 @@
                     labelEl.textContent = labelText;
                     labelEl.style.background = labelColor || '#ff2a6d';
                     labelEl.style.boxShadow = `0 0 10px ${labelColor || '#ff2a6d'}`;
+                    labelEl.style.opacity = '1';
+                } else {
+                    labelEl.style.opacity = '0';
                 }
             }
 
@@ -644,17 +658,71 @@
                 updateSlider();
             }
 
-            nextBtn.addEventListener('click', () => {
+            function nextSlide() {
                 currentIndex = (currentIndex + 1) % slides.length;
                 updateSlider();
+            }
+
+            function prevSlide() {
+                currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+                updateSlider();
+            }
+
+            // --- 自動再生機能 ---
+            function startAutoPlay() {
+                autoPlayInterval = setInterval(nextSlide, autoPlayDelay);
+            }
+
+            function stopAutoPlay() {
+                clearInterval(autoPlayInterval);
+            }
+
+            function resetAutoPlay() {
+                stopAutoPlay();
+                startAutoPlay();
+            }
+
+            // --- ボタンイベント ---
+            nextBtn.addEventListener('click', () => {
+                nextSlide();
+                resetAutoPlay();
             });
 
             prevBtn.addEventListener('click', () => {
-                currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-                updateSlider();
+                prevSlide();
+                resetAutoPlay();
             });
 
+            // --- スマホ用スワイプ機能 ---
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            sliderBox.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                stopAutoPlay(); // タッチ中は止める
+            }, { passive: true });
+
+            sliderBox.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+                startAutoPlay(); // 指を離したら再開
+            }, { passive: true });
+
+            function handleSwipe() {
+                const threshold = 50; // スワイプとみなす距離
+                if (touchEndX < touchStartX - threshold) {
+                    // 左スワイプ -> 次へ
+                    nextSlide();
+                }
+                if (touchEndX > touchStartX + threshold) {
+                    // 右スワイプ -> 前へ
+                    prevSlide();
+                }
+            }
+
+            // --- 初期化 ---
             updateSlider();
+            startAutoPlay();
         });
     </script>
 </body>
